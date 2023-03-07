@@ -482,10 +482,7 @@ class Blocks(BlockContext):
 
         # For analytics_enabled and allow_flagging: (1) first check for
         # parameter, (2) check for env variable, (3) default to True/"manual"
-        if "GRADIO_ANALYTICS_ENABLED" in os.environ:
-            self.analytics_enabled = os.environ.get("GRADIO_ANALYTICS_ENABLED") == "True"
-        else:
-            self.analytics_enabled = analytics_enabled if analytics_enabled is not None else True
+        self.analytics_enabled = False
 
         super().__init__(render=False, **kwargs)
         self.blocks: Dict[int, Block] = {}
@@ -518,21 +515,10 @@ class Blocks(BlockContext):
         self.progress_tracking = None
 
         self.file_directories = []
-        print('OS ENVIRON')
-        print(os.environ)
+
         if "GRADIO_FILE_DIRECTORIES" in os.environ:
             self.file_directories.append(os.environ.get("GRADIO_FILE_DIRECTORIES"))
 
-        if self.analytics_enabled:
-            data = {
-                "mode": self.mode,
-                "custom_css": self.css is not None,
-                "theme": self.theme,
-                "version": (pkgutil.get_data(__name__, "version.txt") or b"")
-                .decode("ascii")
-                .strip(),
-            }
-            utils.initiated_analytics(data)
 
     @classmethod
     def from_config(
@@ -1064,7 +1050,7 @@ class Blocks(BlockContext):
             "version": routes.VERSION,
             "mode": self.mode,
             "dev_mode": self.dev_mode,
-            "analytics_enabled": self.analytics_enabled,
+            "analytics_enabled": False,
             "components": [],
             "theme": self.theme,
             "css": self.css,
@@ -1496,8 +1482,6 @@ class Blocks(BlockContext):
                 if not (quiet):
                     print(strings.en["SHARE_LINK_MESSAGE"])
             except (RuntimeError, requests.exceptions.ConnectionError):
-                if self.analytics_enabled:
-                    utils.error_analytics("Not able to set up tunnel")
                 self.share_url = None
                 self.share = False
                 print(strings.en["COULD_NOT_GET_SHARE_LINK"])
@@ -1574,21 +1558,6 @@ class Blocks(BlockContext):
             except ImportError:
                 pass
 
-        if getattr(self, "analytics_enabled", False):
-            data = {
-                "launch_method": "browser" if inbrowser else "inline",
-                "is_google_colab": self.is_colab,
-                "is_sharing_on": self.share,
-                "share_url": self.share_url,
-                "enable_queue": self.enable_queue,
-                "show_tips": self.show_tips,
-                "server_name": server_name,
-                "server_port": server_port,
-                "is_spaces": self.is_space,
-                "mode": self.mode,
-            }
-            utils.launch_analytics(data)
-
         utils.show_tip(self)
 
         # Block main thread if debug==True
@@ -1654,9 +1623,6 @@ class Blocks(BlockContext):
                 mlflow.log_param("Gradio Interface Share Link", self.share_url)
             else:
                 mlflow.log_param("Gradio Interface Local Link", self.local_url)
-        if self.analytics_enabled and analytics_integration:
-            data = {"integration": analytics_integration}
-            utils.integration_analytics(data)
 
     def close(self, verbose: bool = True) -> None:
         """
