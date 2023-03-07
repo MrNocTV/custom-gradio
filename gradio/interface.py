@@ -170,7 +170,7 @@ class Interface(Blocks):
             max_batch_size: Maximum number of inputs to batch together if this is called from the queue (only relevant if batch=True)
         """
         super().__init__(
-            analytics_enabled=analytics_enabled,
+            analytics_enabled=False,
             mode="interface",
             css=css,
             title=title or "Gradio",
@@ -316,13 +316,7 @@ class Interface(Blocks):
         self.examples_per_page = examples_per_page
 
         self.simple_server = None
-
-        # For analytics_enabled and allow_flagging: (1) first check for
-        # parameter, (2) check for env variable, (3) default to True/"manual"
-        if "GRADIO_ANALYTICS_ENABLED" in os.environ:
-            self.analytics_enabled = os.environ.get("GRADIO_ANALYTICS_ENABLED") == "True"
-        else:
-            self.analytics_enabled = analytics_enabled if analytics_enabled is not None else True
+        self.analytics_enabled = False
 
         if allow_flagging is None:
             allow_flagging = os.getenv("GRADIO_ALLOW_FLAGGING", "manual")
@@ -378,23 +372,6 @@ class Interface(Blocks):
         self.local_url = None
 
         self.favicon_path = None
-
-        if self.analytics_enabled:
-            data = {
-                "mode": self.mode,
-                "fn": fn,
-                "inputs": inputs,
-                "outputs": outputs,
-                "live": live,
-                "interpretation": interpretation,
-                "allow_flagging": allow_flagging,
-                "custom_css": self.css is not None,
-                "theme": self.theme,
-                "version": (pkgutil.get_data(__name__, "version.txt") or b"")
-                .decode("ascii")
-                .strip(),
-            }
-            utils.initiated_analytics(data)
 
         utils.version_check()
         Interface.instances.add(self)
@@ -871,7 +848,7 @@ class TabbedInterface(Blocks):
         super().__init__(
             title=title or "Gradio",
             theme=theme,
-            analytics_enabled=analytics_enabled,
+            analytics_enabled=False,
             mode="tabbed_interface",
             css=css,
         )
