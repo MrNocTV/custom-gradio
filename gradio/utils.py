@@ -60,33 +60,6 @@ JSON_PATH = os.path.join(os.path.dirname(gradio.__file__), "launches.json")
 
 T = TypeVar("T")
 
-
-def version_check():
-    try:
-        version_data = pkgutil.get_data(__name__, "version.txt")
-        if not version_data:
-            raise FileNotFoundError
-        current_pkg_version = version_data.decode("ascii").strip()
-        latest_pkg_version = requests.get(url=PKG_VERSION_URL, timeout=3).json()[
-            "version"
-        ]
-        if StrictVersion(latest_pkg_version) > StrictVersion(current_pkg_version):
-            print(
-                "IMPORTANT: You are using gradio version {}, "
-                "however version {} "
-                "is available, please upgrade.".format(
-                    current_pkg_version, latest_pkg_version
-                )
-            )
-            print("--------")
-    except json.decoder.JSONDecodeError:
-        warnings.warn("unable to parse version details from package URL.")
-    except KeyError:
-        warnings.warn("package URL does not contain version info.")
-    except:
-        pass
-
-
 def get_local_ip_address() -> str:
     """Gets the public IP address or returns the string "No internet connection" if unable to obtain it. Does not make a new request if the IP address has already been obtained."""
     if Context.ip_address is None:
