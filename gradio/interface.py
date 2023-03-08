@@ -373,7 +373,6 @@ class Interface(Blocks):
 
         self.favicon_path = None
 
-        utils.version_check()
         Interface.instances.add(self)
 
         param_names = inspect.getfullargspec(self.fn)[0]

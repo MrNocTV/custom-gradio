@@ -471,7 +471,7 @@ class Blocks(BlockContext):
         self.theme = theme
         self.encrypt = False
         self.share = False
-        self.enable_queue = None
+        self.enable_queue = True
         self.max_threads = 40
         self.show_error = True
         if css is not None and os.path.exists(css):
@@ -1056,7 +1056,7 @@ class Blocks(BlockContext):
             "css": self.css,
             "title": self.title or "Gradio",
             "is_space": self.is_space,
-            "enable_queue": getattr(self, "enable_queue", False),  # launch attributes
+            "enable_queue": getattr(self, "enable_queue", True),  # launch attributes
             "show_error": getattr(self, "show_error", False),
             "show_api": self.show_api,
             "is_colab": utils.colab_check(),
@@ -1204,7 +1204,7 @@ class Blocks(BlockContext):
     @document()
     def queue(
         self,
-        concurrency_count: int = 1,
+        concurrency_count: int = int(os.getenv("GRADIO_QUEUE_CONCURRENCY_COUNT", "16")),
         status_update_rate: float | Literal["auto"] = "auto",
         client_position_to_load_data: int | None = None,
         default_enabled: bool | None = None,
@@ -1251,7 +1251,7 @@ class Blocks(BlockContext):
         inbrowser: bool = False,
         share: bool | None = None,
         debug: bool = False,
-        enable_queue: bool | None = None,
+        enable_queue: bool = True,
         max_threads: int = 40,
         auth: Callable | Tuple[str, str] | List[Tuple[str, str]] | None = None,
         auth_message: str | None = None,
@@ -1327,18 +1327,7 @@ class Blocks(BlockContext):
         self.height = height
         self.width = width
         self.favicon_path = favicon_path
-
-        if enable_queue is not None:
-            self.enable_queue = enable_queue
-            warnings.warn(
-                "The `enable_queue` parameter has been deprecated. Please use the `.queue()` method instead.",
-                DeprecationWarning,
-            )
-
-        if self.is_space:
-            self.enable_queue = self.enable_queue is not False
-        else:
-            self.enable_queue = self.enable_queue is True
+        self.enable_queue = True
         if self.enable_queue and not hasattr(self, "_queue"):
             self.queue()
         self.show_api = self.api_open if self.enable_queue else show_api
